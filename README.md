@@ -2,78 +2,210 @@
 
 # ft_printf
 
+**A small formatting library, one byte at a time.**
+
+![C](https://img.shields.io/badge/language-C-00599C)
+![1337 / 42](https://img.shields.io/badge/school-1337%20%2F%2042-222222)
+
 ## Description
 
-`ft_printf` is a C library that reproduces the mandatory conversions of `printf`, writing directly to standard output without implementing the original function's buffer management. The objective is to learn variadic argument handling, number conversion, and reliable output counting.
-
-A variadic function accepts a variable number of arguments. Here, the format string determines how the arguments following it are interpreted.
+A recreation of the mandatory `printf` conversions from the 42/1337 subject, version 12.1. It builds `libftprintf.a`, a static library: compiled functions that can be linked into another program.
 
 ```c
 int ft_printf(const char *format, ...);
 ```
 
-| Conversion | Output |
-| --- | --- |
-| `%c` | Single character |
-| `%s` | Null-terminated string |
-| `%p` | Pointer address in lowercase hexadecimal with `0x` prefix |
-| `%d`, `%i` | Signed decimal integer |
-| `%u` | Unsigned decimal integer |
-| `%x`, `%X` | Unsigned hexadecimal integer, lowercase or uppercase |
-| `%%` | Literal percent sign |
+- Writes to standard output using `write(1, ..., 1)`.
+- Returns the number of bytes written, or `-1` on a write failure.
+- Uses recursion for numbers; no heap allocation or Libft dependency.
+- Implements the mandatory part only: no flags, width, or precision.
 
-A null string prints `(null)`; a null pointer prints `(nil)`. The implementation covers the mandatory conversions only; flags, field widths, and precision are not implemented. It expects a non-null format string with valid, complete conversion specifications.
+## Supported conversions
+
+| Format | Argument type | Purpose | Example output |
+| --- | --- | --- | --- |
+| `%c` | `int` | One character | `A` |
+| `%s` | `char *` | String | `hello` |
+| `%p` | `void *` | Pointer address | `0x...` |
+| `%d`, `%i` | `int` | Signed decimal | `-42` |
+| `%u` | `unsigned int` | Unsigned decimal | `42` |
+| `%x` | `unsigned int` | Lowercase hexadecimal | `ff` |
+| `%X` | `unsigned int` | Uppercase hexadecimal | `FF` |
+| `%%` | None | Literal percent | `%` |
+
+**Special cases:** null `%s` prints `(null)`; null `%p` prints `(nil)`. An empty string prints nothing. `%c` with value zero writes one invisible zero byte and counts it.
+
+## Project files
+
+```text
+ft_printf/
+|-- Makefile           Build and clean libftprintf.a
+|-- ft_printf.h        Shared declarations
+|-- ft_printf.c        Main loop, parser, dispatcher
+|-- ft_putchar.c       Write one byte
+|-- ft_putstr.c        Print strings
+|-- ft_putnbr.c        Print signed decimal numbers
+|-- ft_putnbr_base.c   Print unsigned decimal and hex
+`-- ft_putadrs.c       Print pointer addresses
+```
+
+## How it works
+
+The parser advances one position for ordinary text and two for a conversion such as `%d`.
+
+```text
+                    ft_printf
+                        |
+                    ft_process
+                        |
+             +----------+-----------+
+             |                      |
+         ordinary byte          % + specifier
+             |                      |
+       write(1, ..., 1)         ft_conversion
+             |                      |
+             |                printing helper
+             |                      |
+             +----------+-----------+
+                        |
+                 count or error
+```
+
+The dispatcher selects the helper and retrieves one argument for each supported conversion. `%%` consumes no argument.
+
+### Variadic arguments
+
+A **variadic function** accepts a variable number of arguments through `...`.
+
+| Tool | Role |
+| --- | --- |
+| `va_list` | Holds argument-traversal state |
+| `va_start` | Initializes traversal |
+| `va_arg` | Retrieves the next argument and advances |
+| `va_end` | Finishes traversal |
+
+```c
+ft_printf("%d %s", 42, "hi");
+```
+
+```text
+Conversion       Retrieved value
+   %d       ---> 42       (int)
+   %s       ---> address  (char *)
+```
+
+The format determines the expected types. Wrong types or missing arguments generally cause undefined behavior: C provides no guaranteed result.
+
+`%c` retrieves `int` because ordinary character arguments undergo **promotion**, an automatic conversion to a wider integer type. `va_list` hides the platform's argument layout; it is not necessarily a pointer walking the stack.
+
+### Numbers: divide, recurse, print
+
+**Recursion** means calling the same function with a smaller problem.
+
+```text
+Printing 123 in decimal:
+
+Call:      123 / 10 = 12
+            12 / 10 = 1
+             1       = stop recursing
+
+Return:     '1'   then   '2'   then   '3'
+Output:                     123
+```
+
+- Division finds the earlier digits; remainder finds the final digit.
+- `ft_putnbr` prints a minus sign for negative values.
+- It converts `int` to `long` before negation, handling `INT_MIN` when `long` has a wider range.
+- `ft_putnbr_base` uses a digit table: decimal or lowercase/uppercase hexadecimal.
+
+For hexadecimal, `255 / 16 = 15` and `255 % 16 = 15`. Both digits select index `15`, producing `ff` or `FF`.
+
+This approach prints digits in order without a temporary digit buffer. Each recursive call returns its own byte count.
+
+### Strings and pointers
+
+A **pointer** holds an address. `%s` reads characters at that address; `%p` prints the address itself.
+
+```text
+String pointer
+      |
+      v
+   +-----+-----+------+
+   | 'h' | 'i' | '\0' |
+   +-----+-----+------+
+      write      stop
+      h, i
+```
+
+`ft_putstr` advances byte by byte until `\0`, the zero terminator. It prints neither the terminator nor a copy of the pointer.
+
+`ft_putadrs` prints `0x`, then calls its internal `ft_puthex` with an `unsigned long` address value. A separate helper avoids narrowing addresses to `unsigned int` on the tested 64-bit platform.
+
+### Counts and errors
+
+```text
+Helper result       Caller action
+-------------       --------------------------
+  0 or more         Add to the byte count
+     -1             Return -1 immediately
+```
+
+Errors travel back through the helper calls. `ft_printf` calls `va_end` and stops. Already written bytes remain visible; a failure cannot undo earlier output.
 
 ## Instructions
 
-From the repository root, build `libftprintf.a` using `cc`, `make`, and `ar`:
+Build with `cc`, `make`, and `ar` in a POSIX environment such as Linux:
 
 ```sh
-make
+make          # Build libftprintf.a
+make clean    # Remove object files
+make fclean   # Remove objects and library
+make re       # Rebuild
 ```
 
-Include `ft_printf.h` in your program, then link and run:
+The Makefile uses `-Wall -Wextra -Werror` and archives the compiled objects with `ar rcs`. An unchanged second `make` does no extra work.
+
+Create `main.c` beside the header:
+
+```c
+#include "ft_printf.h"
+
+int	main(void)
+{
+	if (ft_printf("Hello, %s! %d %X %%\n", "1337", 42, 255u) == -1)
+		return (1);
+	return (0);
+}
+```
+
+Compile and run:
 
 ```sh
-cc -Wall -Wextra -Werror -I. main.c libftprintf.a -o example
-./example
+cc -Wall -Wextra -Werror main.c libftprintf.a -o demo
+./demo
 ```
 
-Available rules: `all` (default) or `libftprintf.a` builds the library; `clean` removes object files; `fclean` also removes the library; `re` performs a full rebuild.
+```text
+Hello, 1337! 42 FF %
+```
 
-## Algorithm and Data Structure Explanation
+Use unsigned arguments such as `255u` for `%u`, `%x`, and `%X`; use `(void *)&object` for `%p`.
 
-### Format scanning and argument handling
+## Checks and known limits
 
-`ft_printf` scans the null-terminated format string using an integer index. `ft_process` writes an ordinary character with `write(1, ..., 1)` and advances the index by one. At `%`, it passes the next character to `ft_conversion` and advances by two.
+**Verified during documentation preparation:** 191 focused checks passed on x86-64 Linux with GCC 14.2.0 and glibc 2.41. They covered output bytes, return counts, integer boundaries, mixed arguments, and write failures. The temporary harness is not included; this is not an official evaluation result.
 
-`va_list` represents the state needed to access the variable arguments. `va_start(args, format)` initializes it, and the list is passed through `ft_process` to `ft_conversion`. The dispatcher uses an `if`/`else if` chain and `va_arg` to retrieve the next argument with the required type: `int` for `%c`, `%d`, and `%i`; `unsigned int` for `%u`, `%x`, and `%X`; `char *` for `%s`; and `void *` for `%p`. `%c` retrieves an `int` because variadic character arguments undergo integer promotion. `%%` consumes no argument. `va_end` is called before both normal completion and an output-error return. No `va_copy` is used.
-
-### Recursive number conversion
-
-`ft_putnbr` copies its signed integer into a `long`, prints a minus sign when necessary, and makes the value positive. On the target Linux platform, the wider `long` allows the minimum `int` value to be negated safely. It recursively prints the quotient by 10 before printing the remainder, producing digits from left to right without a temporary digit buffer.
-
-`ft_putnbr_base` shares the unsigned conversion logic between decimal and hexadecimal. A local `ft_strlen` determines the digit alphabet's length. The function recursively prints the quotient by that length, then selects the final digit using the remainder. The dispatcher supplies `0123456789`, `0123456789abcdef`, or `0123456789ABCDEF`. Zero reaches the final digit write directly and prints `0`.
-
-`ft_putadrs` handles null pointers separately. Otherwise, it prints `0x`, casts the pointer to `unsigned long`, and calls the local recursive `ft_puthex` to emit lowercase hexadecimal digits. This representation assumes `unsigned long` can hold a pointer on the target platform.
-
-### Output counting and organization
-
-`ft_putchar` returns the result of a one-byte `write`. `ft_putstr` walks the string and calls it for each character. Numeric and pointer helpers add the counts returned by their recursive calls, prefixes, signs, and digits. `ft_printf` accumulates each processed element's count and returns the total number of bytes written.
-
-Each output operation is checked for `-1`. A failure propagates through the helpers to `ft_printf`, which calls `va_end` and returns `-1`; bytes already written remain in the output.
-
-The implementation uses the existing format and argument strings, fixed digit alphabets, scalar counters, a `va_list`, and recursive calls. It allocates no heap memory and builds no intermediate output buffer. Scanning is linear in the format length, string printing is linear in the string length, and number printing uses one recursive level per digit. These choices keep the conversion logic small and direct.
-
-Separating scanning, dispatch, and output helpers keeps each function focused and supports Norminette's function-size constraints. Local implementation helpers (`ft_conversion`, `ft_process`, `ft_strlen`, and `ft_puthex`) are declared `static` to keep them private to their source files.
+- **Trailing `%`:** a separate memory-checking run confirmed a read beyond the format string.
+- **Unknown conversions:** the parser skips the pair; `A%qB` becomes `AB`.
+- **Portability:** sharing `va_list` through the current helper signatures is platform-dependent. Integer and pointer handling also rely on suitable `long` ranges.
+- **Input and size limits:** null format strings and invalid string pointers are unguarded; counters have no overflow checks.
+- **Write behavior:** one request per byte; failures are not retried. Norminette was not run during this review.
 
 ## Resources
 
-- Official **ft_printf subject, version 12.1**.
-- Unix/Linux manual pages: `man 3 printf`, `man 3 stdarg`, and `man 2 write`.
-- Stack Overflow for technical questions and explanations.
-- Google searches and general research for additional clarification.
+- Official 42/1337 **ft_printf subject, version 12.1**.
+- [`printf(3)`](https://man7.org/linux/man-pages/man3/printf.3.html): formatting and return values.
+- [`stdarg(3)`](https://man7.org/linux/man-pages/man3/stdarg.3.html): variadic arguments.
+- [`write(2)`](https://man7.org/linux/man-pages/man2/write.2.html): output and errors.
 
-### AI Usage
-
-I used AI as a learning and conceptual explanation tool to better understand variadic functions and the behavior of `va_list`, `va_start`, `va_arg`, and `va_end`. I also used it to clarify specific technical questions, particularly why certain implementations work and others do not.
+**AI usage:** AI helped explain variadic functions and specific C concepts. It also assisted with this README and its verification checks; the C implementation was supplied by the author.

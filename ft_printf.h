@@ -6,7 +6,7 @@
 /*   By: mbelarab <mbelarab@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 09:10:55 by mbelarab          #+#    #+#             */
-/*   Updated: 2026/11/10 10:54:43 by mbelarab         ###   ########.fr       */
+/*   Updated: 2026/11/11 08:46:39 by mbelarab         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,4 +23,5 @@ int		ft_putchar(char c);
 int		ft_putnbr(int n);
 int		ft_putstr(char *str);
 int		ft_putnbr_base(unsigned int nbr, char *base);
+int		ft_putadrs(void *p);
 #endif

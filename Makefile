@@ -6,7 +6,7 @@
 #    By: mbelarab <mbelarab@student.1337.ma>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/11/10 09:21:29 by mbelarab          #+#    #+#              #
-#    Updated: 2026/11/10 11:59:48 by mbelarab         ###   ########.fr        #
+#    Updated: 2026/11/10 20:32:35 by mbelarab         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,6 +19,7 @@ SRCS 	= ft_putchar.c\
 		  ft_putnbr.c\
 		  ft_putstr.c\
 		  ft_putnbr_base.c\
+		  ft_putadrs.c\
 		  ft_printf.c
 
 OBJS	= $(SRCS:.c=.o)

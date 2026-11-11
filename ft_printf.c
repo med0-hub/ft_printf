@@ -6,7 +6,7 @@
 /*   By: mbelarab <mbelarab@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 08:54:47 by mbelarab          #+#    #+#             */
-/*   Updated: 2026/11/10 18:48:59 by mbelarab         ###   ########.fr       */
+/*   Updated: 2026/11/11 08:47:24 by mbelarab         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,11 @@ int	ft_printf(const char *format, ...)
 		else if(format[i] == '%' && format[i + 1] == 'X')
 		{
 			count += ft_putnbr_base(va_arg(args, unsigned int), "0123456789ABCDEF");
+			i += 2;
+		}
+		else if(format[i] == '%' && format[i + 1] == 'p')
+		{
+			count += ft_putadrs(va_arg(args, void *));
 			i += 2;
 		}
 		else

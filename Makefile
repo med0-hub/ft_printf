@@ -6,11 +6,11 @@
 #    By: mbelarab <mbelarab@student.1337.ma>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/11/10 09:21:29 by mbelarab          #+#    #+#              #
-#    Updated: 2026/11/10 20:32:35 by mbelarab         ###   ########.fr        #
+#    Updated: 2026/11/11 16:45:56 by mbelarab         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME	= ft_printf.a
+NAME	= libftprintf.a
 
 CC		= cc
 CFLAGS	= -Wall -Wextra -Werror

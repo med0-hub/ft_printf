@@ -6,7 +6,7 @@
 /*   By: mbelarab <mbelarab@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 09:15:45 by mbelarab          #+#    #+#             */
-/*   Updated: 2026/11/10 09:16:46 by mbelarab         ###   ########.fr       */
+/*   Updated: 2026/11/11 11:02:25 by mbelarab         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,5 +14,5 @@
 
 int	ft_putchar(char c)
 {
-	return ((int)write(1, &c, 1));
+	return (write(1, &c, 1));
 }

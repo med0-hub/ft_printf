@@ -208,4 +208,4 @@ Use unsigned arguments such as `255u` for `%u`, `%x`, and `%X`; use `(void *)&ob
 - [`stdarg(3)`](https://man7.org/linux/man-pages/man3/stdarg.3.html): variadic arguments.
 - [`write(2)`](https://man7.org/linux/man-pages/man2/write.2.html): output and errors.
 
-**AI usage:** AI helped explain variadic functions and specific C concepts. It also assisted with this README and its verification checks; the C implementation was supplied by the author.
+**AI usage:** AI helped explain variadic functions and specific C concepts. It also assisted with this README and its verification checks; the C implementation was supplied by med0-hub.
